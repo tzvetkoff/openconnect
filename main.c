@@ -152,6 +152,7 @@ enum {
 	OPT_CONFIGFILE,
 	OPT_COOKIEONLY,
 	OPT_COOKIE_ON_STDIN,
+	OPT_IGNORE_CSD,
 	OPT_CSD_USER,
 	OPT_CSD_WRAPPER,
 	OPT_DISABLE_IPV6,
@@ -209,6 +210,7 @@ static const struct option long_options[] = {
 	OPTION("syslog", 0, 'l'),
 	OPTION("csd-user", 1, OPT_CSD_USER),
 	OPTION("csd-wrapper", 1, OPT_CSD_WRAPPER),
+	OPTION("ignore-csd", 0, OPT_IGNORE_CSD),
 #endif
 	OPTION("pfs", 0, OPT_PFS),
 	OPTION("certificate", 1, 'c'),
@@ -777,6 +779,7 @@ static void usage(void)
 	printf("  -U, --setuid=USER               %s\n", _("Drop privileges after connecting"));
 	printf("      --csd-user=USER             %s\n", _("Drop privileges during CSD execution"));
 	printf("      --csd-wrapper=SCRIPT        %s\n", _("Run SCRIPT instead of CSD binary"));
+	printf("      --ignore-csd                %s\n", _("Ignore server request to run CSD"));
 #endif
 	printf("  -m, --mtu=MTU                   %s\n", _("Request MTU from server (legacy servers only)"));
 	printf("      --base-mtu=MTU              %s\n", _("Indicate path MTU to/from server"));
@@ -1113,6 +1116,9 @@ int main(int argc, char **argv)
 			break;
 		case OPT_CSD_WRAPPER:
 			vpninfo->csd_wrapper = keep_config_arg();
+			break;
+		case OPT_IGNORE_CSD:
+			vpninfo->ignore_csd = 1;
 			break;
 #endif /* !_WIN32 */
 		case OPT_PROTOCOL:

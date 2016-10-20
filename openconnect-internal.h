@@ -362,6 +362,7 @@ struct openconnect_info {
 	struct esp esp_in[2];
 	struct esp esp_out;
 
+	int ignore_csd;
 	int tncc_fd; /* For Juniper TNCC */
 	const char *csd_xmltag;
 	int csd_nostub;

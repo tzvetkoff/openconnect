@@ -631,7 +631,10 @@ static int handle_auth_form(struct openconnect_info *vpninfo, struct oc_auth_for
 		return -EPERM;
 	}
 
-	if (vpninfo->csd_token && vpninfo->csd_ticket && vpninfo->csd_starturl && vpninfo->csd_waiturl) {
+	if (vpninfo->ignore_csd) {
+		/* plow ahead */
+		;
+	} else if (vpninfo->csd_token && vpninfo->csd_ticket && vpninfo->csd_starturl && vpninfo->csd_waiturl) {
 		/* AB: remove all cookies */
 		for (opt = vpninfo->cookies; opt; opt = next) {
 			next = opt->next;
@@ -1345,7 +1348,10 @@ newgroup:
 		vpn_progress(vpninfo, PRG_INFO, _("XML POST enabled\n"));
 
 	/* Step 4: Run the CSD trojan, if applicable */
-	if (vpninfo->csd_starturl && vpninfo->csd_waiturl) {
+	if (vpninfo->ignore_csd && vpninfo->csd_starturl && vpninfo->csd_waiturl) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Ignoring CSD trojan even though server requests it.\n"));
+	} else if (vpninfo->csd_starturl && vpninfo->csd_waiturl) {
 		buflen = 0;
 
 		if (vpninfo->urlpath) {
