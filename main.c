@@ -171,6 +171,7 @@ enum {
 	OPT_NO_XMLPOST,
 	OPT_PIDFILE,
 	OPT_PASSWORD_ON_STDIN,
+	OPT_PASSWORD_ON_FILE,
 	OPT_PRINTCOOKIE,
 	OPT_RECONNECT_TIMEOUT,
 	OPT_SERVERCERT,
@@ -246,6 +247,7 @@ static const struct option long_options[] = {
 	OPTION("xmlconfig", 1, 'x'),
 	OPTION("cookie-on-stdin", 0, OPT_COOKIE_ON_STDIN),
 	OPTION("passwd-on-stdin", 0, OPT_PASSWORD_ON_STDIN),
+	OPTION("passwd-on-file", 1, OPT_PASSWORD_ON_FILE),
 	OPTION("no-passwd", 0, OPT_NO_PASSWD),
 	OPTION("reconnect-timeout", 1, OPT_RECONNECT_TIMEOUT),
 	OPTION("dtls-ciphers", 1, OPT_DTLS_CIPHERS),
@@ -755,6 +757,42 @@ static void set_default_vpncscript(void)
 }
 #endif
 
+static void read_file(char *filename, char **string)
+{
+	FILE *f;
+	long n;
+	char *buf;
+
+	if ((f = fopen(filename, "rb")) == NULL) {
+		fprintf(stderr, _("Cannot open password file \"%s\"\n"), filename);
+		exit(1);
+	}
+
+	fseek(f, 0, SEEK_END);
+	n = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	if ((buf = malloc(n + 1)) == NULL) {
+		fprintf(stderr, _("Allocation failure for password from file\n"));
+		exit(1);
+	}
+
+	if ((fread(buf, 1, n, f)) != n) {
+		fprintf(stderr, _("Error reading from password file\n"));
+		exit(1);
+	}
+
+	if (buf[n - 1] == 0x0a) {
+		buf[n - 1] = 0;
+
+		if (buf[n - 2] == 0x0d) {
+			buf[n - 2] = 0;
+		}
+	}
+
+	*string = buf;
+}
+
 static struct oc_vpn_option *gai_overrides;
 
 static int gai_override_cb(void *cbdata, const char *node,
@@ -847,6 +885,7 @@ static void usage(void)
 	printf("      --no-xmlpost                %s\n", _("Do not attempt XML POST authentication"));
 	printf("      --non-inter                 %s\n", _("Do not expect user input; exit if it is required"));
 	printf("      --passwd-on-stdin           %s\n", _("Read password from standard input"));
+	printf("      --passwd-on-file            %s\n", _("Read password from file"));
 	printf("      --token-mode=MODE           %s\n", _("Software token type: rsa, totp or hotp"));
 	printf("      --token-secret=STRING       %s\n", _("Software token secret"));
 #ifndef HAVE_LIBSTOKEN
@@ -1254,6 +1293,9 @@ int main(int argc, char **argv)
 		case OPT_PASSWORD_ON_STDIN:
 			read_stdin(&password, 0, 0);
 			allow_stdin_read = 1;
+			break;
+		case OPT_PASSWORD_ON_FILE:
+			read_file(config_arg, &password);
 			break;
 		case OPT_NO_PASSWD:
 			vpninfo->nopasswd = 1;
